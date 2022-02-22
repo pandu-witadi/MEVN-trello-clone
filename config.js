@@ -11,9 +11,10 @@ let cfApp = {
     dburl : 'mongodb://127.0.0.1:27017/',
     dbname : 'MEVN-trello-clone',
 
+    saltLength: 10,
     // secret_key for JWT (JSONWebToken)
     secret_str : "this-auth-token",
-    refresh_token_time:  2 * 60 // 2 minutes
+    token_exp:  10 * 60 // 2 minutes
 }
 cfApp.publicURL = cfApp.baseURL + ':' + cfApp.port.toString()
 cfApp.apiURL = cfApp.publicURL + '/api'

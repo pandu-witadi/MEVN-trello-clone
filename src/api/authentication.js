@@ -2,36 +2,39 @@
 //
 //
 const jwt = require('jsonwebtoken')
-const cfApp = require('../../config')
+
 const User = require('../models/User')
+const CF = require('../../config')
+const {
+    comparePassword,
+    createToken
+} = require('../util/authentication')
 
-
-// create json web token
-const createToken = (email) => {
-    return jwt.sign(
-        { email: email },
-        cfApp.secret_str, {
-            expiresIn: cfApp.refresh_token_time
-        })
-}
 
 
 const login = async (req, res) => {
-    const { email, password } = req.body
-    console.log('login', email, password)
-    try {
-        var tmp = await User.login( email, password )
-        var accessToken = createToken(tmp.email)
-        var user = JSON.parse(JSON.stringify(tmp))
-        delete user.password
+    let { email, password } = req.body
+
+    if (!(email && password))
+        return res.json({ errors: "parameters incomplete" })
+
+    let user = await User.findOne({email: email})
+    if (!user)
+        return res.status(401).json({ errors: "email not register" })
+
+    let isPassword = await comparePassword(password, user.password)
+    if (isPassword) {
+        let accessToken = createToken(user._id, CF.token_exp)
+        let tmp = JSON.parse(JSON.stringify(user))
+        delete tmp.password
         return res.status(200).json({
             accessToken: accessToken,
             payload: jwt.decode(accessToken),
-            user: user
+            user: tmp
         })
-    } catch (err) {
-        return res.json({ errors: err })
-    }
+    } else
+        return res.json({ errors: "error in login" })
+
 }
 
 module.exports = {
